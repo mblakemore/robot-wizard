@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Robot Brain Builder — 6-phase cognitive loop bootstrap</title>
+  <meta name="description" content="Generate a starter repo for a Claude Code agent with the 6-phase cognitive loop (PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSIST).">
+  <link rel="stylesheet" href="wizard.css">
+</head>
+<body>
+  <header class="hero">
+    <h1>Robot Brain Builder</h1>
+    <p class="tagline">
+      Generate a starter repo for a self-bootstrapping agent that runs on the
+      6-phase cognitive loop. Drop the files in an empty repo, run
+      <code>claude</code>, and the brain wakes up.
+    </p>
+    <p class="sub">
+      <strong>PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSIST</strong>
+    </p>
+  </header>
+
+  <main>
+    <form id="wizard" autocomplete="off">
+
+      <!-- ── 1. Identity ─────────────────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">1</span> Identity</legend>
+        <label>
+          Agent name
+          <input type="text" id="agentName" value="Johnny 5" required
+                 pattern="[A-Za-z0-9 _\-]{1,40}"
+                 title="Letters, numbers, spaces, hyphens, underscores">
+          <small>Shown at the top of README.md and CLAUDE.md.</small>
+        </label>
+        <label>
+          Role (one line)
+          <input type="text" id="agentRole"
+                 value="Autonomous builder agent"
+                 maxlength="120">
+          <small>e.g. "Autonomous builder agent", "Research companion".</small>
+        </label>
+        <label>
+          Purpose (a paragraph — optional)
+          <textarea id="agentPurpose" rows="3"
+                    placeholder="What does this agent exist to do?"></textarea>
+          <small>Appears in the "I Am" section of README.md.</small>
+        </label>
+      </fieldset>
+
+      <!-- ── 2. Cognitive loop variant ──────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">2</span> Cognitive loop</legend>
+        <label class="radio">
+          <input type="radio" name="loop" value="six" checked>
+          <span>
+            <strong>6-phase (full)</strong> —
+            PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSIST.
+            The version that's been validated across thousands of cycles.
+          </span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="loop" value="four">
+          <span>
+            <strong>4-phase (streamlined)</strong> —
+            PERCEIVE → DECIDE → ACT → PERSIST. Drops explicit reflect and
+            consolidate phases. Faster cycles, shallower learning.
+          </span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="loop" value="minimal">
+          <span>
+            <strong>Minimal</strong> —
+            Read state → Act → Commit. No formal phase boundaries. Good
+            starting point for custom loop designs.
+          </span>
+        </label>
+      </fieldset>
+
+      <!-- ── 3. Memory systems ──────────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">3</span> Memory systems</legend>
+        <label class="check">
+          <input type="checkbox" id="memPatterns" checked>
+          <span>
+            <strong>Patterns</strong> — reusable knowledge (what worked, what
+            didn't). Queried during REFLECT, stored during CONSOLIDATE.
+          </span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="memAnchors" checked>
+          <span>
+            <strong>Anchors</strong> — significant milestones. A narrative
+            spine across cycles.
+          </span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="memContext" checked disabled>
+          <span>
+            <strong>Context</strong> — working memory. Updated every cycle.
+            <em>(always included)</em>
+          </span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="memDecisions">
+          <span>
+            <strong>Decision log</strong> — track architectural choices and
+            their outcomes. Enables calibration: are my predictions right?
+          </span>
+        </label>
+      </fieldset>
+
+      <!-- ── 4. Cycle-end detection ─────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">4</span> Cycle-end detection</legend>
+        <p class="hint">
+          How does the outer harness (Control Tower, <code>claude</code> CLI,
+          or a human) know a cycle finished?
+        </p>
+        <label class="radio">
+          <input type="radio" name="cycleEnd" value="git-commit" checked>
+          <span>
+            <strong>Git commit</strong> — each cycle ends with a commit
+            matching <code>^C\d+</code> (e.g. <code>C42: …</code>). Works with
+            Control Tower out of the box.
+          </span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="cycleEnd" value="process-exit">
+          <span>
+            <strong>Process exit</strong> — the CLI/assistant exits when the
+            cycle is done. For script-driven loops.
+          </span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="cycleEnd" value="manual">
+          <span>
+            <strong>Manual</strong> — a human triggers each cycle. No
+            automatic detection.
+          </span>
+        </label>
+      </fieldset>
+
+      <!-- ── 5. Persona preset ──────────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">5</span> Persona preset</legend>
+        <p class="hint">Seeds the "I Am" section of README.md. Edit freely after download.</p>
+        <label class="radio">
+          <input type="radio" name="persona" value="blank" checked>
+          <span><strong>Blank</strong> — minimal scaffold, you fill in.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="persona" value="builder">
+          <span><strong>Builder</strong> — implements a project from a plan, methodically.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="persona" value="researcher">
+          <span><strong>Researcher</strong> — open-ended exploration and note-taking.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="persona" value="operator">
+          <span><strong>Operator</strong> — runs and maintains an existing system.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="persona" value="johnny5">
+          <span><strong>Johnny 5</strong> — curious, eager, "need more input." A creature rather than a worker.</span>
+        </label>
+      </fieldset>
+
+      <!-- ── 6. Preview + download ──────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">6</span> Preview &amp; download</legend>
+        <div class="preview-wrap">
+          <div class="tree" id="tree" aria-label="Generated file tree"></div>
+          <div class="file-view">
+            <div class="file-tabs" id="fileTabs"></div>
+            <pre class="file-body" id="fileBody">Select a file…</pre>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" id="downloadBtn" class="primary">
+            Download brain.zip
+          </button>
+          <button type="button" id="copyClaudeBtn">Copy CLAUDE.md</button>
+          <span class="status" id="status" role="status"></span>
+        </div>
+      </fieldset>
+    </form>
+
+    <aside class="usage">
+      <h2>After you download</h2>
+      <ol>
+        <li>Unzip into an empty repo: <code>unzip brain.zip -d ./my-agent &amp;&amp; cd my-agent</code></li>
+        <li><code>git init &amp;&amp; git add -A &amp;&amp; git commit -m "C0: bootstrap"</code></li>
+        <li>Start a Claude Code session in the directory: <code>claude</code></li>
+        <li>Paste: <code>@README.md @CLAUDE.md Follow the instructions and begin the loop.</code></li>
+      </ol>
+      <p>
+        The agent reads its own CLAUDE.md, initializes state, and runs the
+        first cycle. Each cycle ends with a commit — <code>git log</code>
+        becomes the brain's narrative.
+      </p>
+    </aside>
+  </main>
+
+  <footer>
+    <p>
+      6-phase loop battle-tested by agents running on
+      <a href="https://github.com/mblakemore/control-tower">Control Tower</a>.
+      Wizard runs entirely in your browser — no files leave your machine.
+    </p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"
+          integrity="sha384-oXnnSTPRZKJYgnsebUomxKcpw0Gg7mvH5tCeBp+yezWLBCif3q7WNNnRTVwgNAfT"
+          crossorigin="anonymous"></script>
+  <script src="wizard.js" defer></script>
+</body>
+</html>
