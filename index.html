@@ -167,9 +167,31 @@
         </label>
       </fieldset>
 
-      <!-- ── 6. Preview + download ──────────────────────────────────── -->
+      <!-- ── 6. Output format ───────────────────────────────────────── -->
       <fieldset>
-        <legend><span class="step">6</span> Preview &amp; download</legend>
+        <legend><span class="step">6</span> Output format</legend>
+        <p class="hint">Which instructions filename to generate, and whether to split README from CLAUDE/AGENT.</p>
+        <label class="radio">
+          <input type="radio" name="filename" value="CLAUDE" checked>
+          <span><strong>CLAUDE.md</strong> — default, auto-loaded by Claude Code.</span>
+        </label>
+        <label class="radio">
+          <input type="radio" name="filename" value="AGENT">
+          <span><strong>AGENT.md</strong> — generic name for engines like Codex CLI, Cursor Agents, Aider, etc.</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="condenseToSingle">
+          <span><strong>Condense to a single file</strong> — merge README into the instructions file. No separate README.md.</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="standingDirectives">
+          <span><strong>Include standing directives</strong> — adds <code>messages/directives.md</code> for permanent rules (separate from transient creator notes).</span>
+        </label>
+      </fieldset>
+
+      <!-- ── 7. Preview + download ──────────────────────────────────── -->
+      <fieldset>
+        <legend><span class="step">7</span> Preview &amp; download</legend>
         <div class="preview-wrap">
           <div class="tree" id="tree" aria-label="Generated file tree"></div>
           <div class="file-view">
@@ -192,11 +214,11 @@
       <ol>
         <li>Unzip into an empty repo: <code>unzip brain.zip -d ./my-agent &amp;&amp; cd my-agent</code></li>
         <li><code>git init &amp;&amp; git add -A &amp;&amp; git commit -m "C0: bootstrap"</code></li>
-        <li>Start a Claude Code session in the directory: <code>claude</code></li>
-        <li>Paste: <code>@README.md @CLAUDE.md Follow the instructions and begin the loop.</code></li>
+        <li>Start an assistant session in the directory: <code>claude</code> (or your CLI of choice)</li>
+        <li>Paste: <code id="pasteHint">@README.md @CLAUDE.md Follow the instructions and begin the loop.</code></li>
       </ol>
       <p>
-        The agent reads its own CLAUDE.md, initializes state, and runs the
+        The agent reads <code id="instrFileHint">CLAUDE.md</code>, initializes state, and runs the
         first cycle. Each cycle ends with a commit — <code>git log</code>
         becomes the brain's narrative.
       </p>

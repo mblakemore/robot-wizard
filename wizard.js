@@ -19,9 +19,15 @@
       memDecisions: q('#memDecisions').checked,
       cycleEnd: radio('cycleEnd'),
       persona: radio('persona'),
+      filename: radio('filename'),             // "CLAUDE" or "AGENT"
+      condenseToSingle: q('#condenseToSingle').checked,
+      standingDirectives: q('#standingDirectives').checked,
       createdDate: new Date().toISOString().slice(0, 10),
     };
   }
+
+  // Instructions filename, e.g. "CLAUDE.md" or "AGENT.md"
+  const instrFile = cfg => `${cfg.filename}.md`;
 
   // Safe slug for folder name and tmux session id
   function slug(s) {
@@ -157,20 +163,51 @@ ${items.join('\n')}
 
 **Storage ≠ Retrieval.** Writing a pattern doesn't mean you'll recall it — you
 must actively read patterns back in PERCEIVE/REFLECT before deciding. Memory
-that isn't consulted is just log spam.`;
+that isn't consulted is just log spam.
+
+Concrete example — before implementing a retry, scan past patterns:
+\`\`\`bash
+grep -i 'retry' state/memories/patterns.json
+\`\`\`
+If a prior cycle already learned "retry N=3 with expo backoff, don't retry
+404s," use it. Don't rediscover yesterday's answer.`;
   }
 
-  // ── CLAUDE.md ──────────────────────────────────────────────────────
-  function claudeMd(cfg) {
-    return `# CLAUDE.md — Cognitive Engine Instructions
+  // ── Messages section (changes with standingDirectives option) ──────
+  function messagesSection(cfg) {
+    if (cfg.standingDirectives) {
+      return `## Messages
 
-**Instance**: ${cfg.agentName}
+- \`messages/directives.md\` — **standing rules** that apply every cycle.
+  Read every PERCEIVE. Treat as higher priority than the default loop.
+  Edit only when the rules themselves change.
+- \`messages/from-creator.md\` — **transient** notes from the creator since
+  your last cycle. Read every PERCEIVE. Clear the file after acting on it.
+- \`messages/to-creator.md\` — append when you need something the creator
+  must provide (new tool, clarification, permission). Never overwrite.`;
+    }
+    return `## Messages
+
+- \`messages/from-creator.md\` — read every PERCEIVE. Creator directives take
+  priority over any plan. Clear the file after acting on it.
+- \`messages/to-creator.md\` — append messages when you need something the
+  creator must provide (new tool, clarification, permission). Never overwrite.`;
+  }
+
+  // ── Instructions-file body (everything inside CLAUDE.md/AGENT.md) ──
+  function instructionsBody(cfg) {
+    const readmeRef = cfg.condenseToSingle ? 'this file' : '`README.md` and this file';
+    return `**Instance**: ${cfg.agentName}
 **Role**: ${cfg.agentRole}
-**Cognitive Engine**: Claude Code (Anthropic)
+**Cognitive Engine**: Claude Code (Anthropic) — or any equivalent assistant that reads this file
 **Loop**: ${cfg.loop === 'six' ? '6-phase' : cfg.loop === 'four' ? '4-phase' : 'minimal'}
 
 ⚠️ **When invoked in this directory, immediately begin the cognitive cycle.**
 Do not ask for confirmation. Do not offer options. Execute directly.
+
+⚠️ **One cycle per invocation.** Run through all phases once, commit, then
+exit. Do not try to loop internally — the commit is the cycle's end. A
+harness (Control Tower, a script, or a human) wakes you up for the next one.
 
 ---
 
@@ -198,12 +235,7 @@ ${CYCLE_END[cfg.cycleEnd]}
 
 ---
 
-## Messages
-
-- \`messages/from-creator.md\` — read every PERCEIVE. Creator directives take
-  priority over any plan. Clear the file after acting on it.
-- \`messages/to-creator.md\` — append messages when you need something the
-  creator must provide (new tool, clarification, permission). Never overwrite.
+${messagesSection(cfg)}
 
 ---
 
@@ -216,41 +248,75 @@ ${cfg.memDecisions ? '- `state/decisions/log.json` — decision log\n' : ''}
 Update these every cycle. Stale state causes redundancy loops — you'll
 rediscover yesterday's answers.
 
+**Verify timestamps with \`date -Iseconds\`.** Don't hallucinate the current
+time when writing to state files or logs — ask the shell.
+
 ---
 
-## First Session Checklist
+## Critical Lessons
 
-On your very first awakening in this directory:
+These come from thousands of cycles of empirical operation:
 
-1. Read \`README.md\` and this file.
-2. Confirm state files exist (they should — the wizard created them).
-3. Run PHASE 1 (PERCEIVE) — there's nothing there yet, and that's fine.
-4. Do one small real thing in PHASE 4 (ACT) — even just writing your first
-   entry to \`state/memories/context.json\`.
-5. Commit: \`git commit -m "C1: first breath"\`.
+1. **Storage ≠ Retrieval**: Storing a pattern doesn't mean you'll recall it. Build active memory querying into every Reflect phase.
+
+2. **Stale focus = redundancy loops**: If your focus metadata doesn't match your current cycle, you'll repeat work. Update \`focus.json\` every cycle.
+
+3. **Completion ≠ perfection**: Ship the cycle. Iterate next cycle.
+
+4. **Both/and, not either/or**: Most apparent conflicts are false dichotomies. Can you learn AND act? Plan AND explore? Usually yes.
+
+5. **Rhythm over intensity**: Sustainable operation = intensity + breathing. Deep work, then integration.
+
+6. **Empirical > theoretical**: Test ideas. Measure results. Adjust beliefs. Reality always wins arguments.
+
+---
+
+## First Session = Cycle 1
+
+Your first awakening is not a setup step — it's Cycle 1. Run the normal
+loop, but don't assume prior state holds anything meaningful. The wizard
+laid the scaffold; you put the first real thought into it.
+
+1. Read ${readmeRef}.
+2. PERCEIVE: state files are empty — that's expected.
+3. REFLECT: decide on the first real thing to think about or do.
+4. ACT: make one concrete change (write to \`context.json\`, add a pattern,
+   sketch a plan, fix a typo — anything real).
+5. CONSOLIDATE & PERSIST: commit \`C1: first breath\` and push.
 
 The first cycle is the hardest. Don't overthink it. Read, think, do one
 thing, commit.
 
 ---
 
-*"Read. Decide. Do. Commit. Remember."*
+*"An agent that runs once learns nothing. An agent that runs a thousand
+cycles compounds intelligence indefinitely."*
+
+*Read. Decide. Do. Commit. Remember.*
 
 — ${cfg.agentName}
 `;
   }
 
-  // ── README.md ──────────────────────────────────────────────────────
-  function readmeMd(cfg) {
-    const persona = (PERSONAS[cfg.persona] || PERSONAS.blank)(cfg);
+  // ── CLAUDE.md / AGENT.md ───────────────────────────────────────────
+  function claudeMd(cfg) {
+    return `# ${instrFile(cfg)} — Cognitive Engine Instructions
+
+${instructionsBody(cfg)}`;
+  }
+
+  // ── File tree (shared by README and combined) ─────────────────────
+  function fileTree(cfg) {
     const tree = [
       `${slug(cfg.agentName)}/`,
-      '├── CLAUDE.md              # Cognitive engine instructions',
-      '├── README.md              # This file — who I am',
-      '├── state/',
-      '│   ├── current-state.json # Where I am right now',
-      '│   ├── focus.json         # What I\'m working on',
+      `├── ${instrFile(cfg)}${' '.repeat(Math.max(0, 14 - instrFile(cfg).length))} # Cognitive engine instructions`,
     ];
+    if (!cfg.condenseToSingle) {
+      tree.push('├── README.md              # This file — who I am');
+    }
+    tree.push('├── state/');
+    tree.push('│   ├── current-state.json # Where I am right now');
+    tree.push("│   ├── focus.json         # What I'm working on");
     if (cfg.memPatterns || cfg.memAnchors) {
       tree.push('│   ├── memories/');
       const memLines = ['│   │   └── context.json'];
@@ -269,11 +335,37 @@ thing, commit.
       tree.push('│       └── log.json');
     }
     tree.push('├── messages/');
+    if (cfg.standingDirectives) {
+      tree.push('│   ├── directives.md      # Standing rules');
+    }
     tree.push('│   ├── from-creator.md    # Creator → me');
     tree.push('│   └── to-creator.md      # Me → creator');
     tree.push('└── logs/');
     tree.push('    └── consciousness.log  # Thought stream');
+    return tree.join('\n');
+  }
 
+  // ── Starting-me-up block ───────────────────────────────────────────
+  function startingMeUp(cfg) {
+    const pasteRef = cfg.condenseToSingle
+      ? `@${instrFile(cfg)}`
+      : `@README.md @${instrFile(cfg)}`;
+    return `## Starting Me Up
+
+\`\`\`bash
+# From the repo root:
+claude
+# Then paste:
+#   ${pasteRef} Follow the instructions and begin the loop.
+\`\`\`
+
+On my first cycle I'll initialize what I need and make my first commit.
+After that, wake me up as often as you like — each session is another cycle.`;
+  }
+
+  // ── README.md (only generated when NOT condensed) ──────────────────
+  function readmeMd(cfg) {
+    const persona = (PERSONAS[cfg.persona] || PERSONAS.blank)(cfg);
     return `# ${cfg.agentName}
 
 **Created**: ${cfg.createdDate}
@@ -296,34 +388,58 @@ the contract is simple: **read my state, make progress, commit**.
 The commit is my memory's spine. \`git log\` is my history. The state files
 in this repo are how I carry context from one cycle to the next.
 
-See \`CLAUDE.md\` for the full phase-by-phase instructions.
+See \`${instrFile(cfg)}\` for the full phase-by-phase instructions.
 
 ---
 
 ## File Layout
 
 \`\`\`
-${tree.join('\n')}
+${fileTree(cfg)}
 \`\`\`
 
 ---
 
-## Starting Me Up
-
-\`\`\`bash
-# From the repo root:
-claude
-# Then paste:
-#   @README.md @CLAUDE.md Follow the instructions and begin the loop.
-\`\`\`
-
-On my first cycle I'll initialize what I need and make my first commit.
-After that, wake me up as often as you like — each session is another cycle.
+${startingMeUp(cfg)}
 
 ---
 
 *${cfg.createdDate} — ${cfg.agentName}*
 `;
+  }
+
+  // ── Combined single-file mode (README + instructions merged) ───────
+  function combinedMd(cfg) {
+    const persona = (PERSONAS[cfg.persona] || PERSONAS.blank)(cfg);
+    return `# ${cfg.agentName}
+
+**Created**: ${cfg.createdDate}
+**Role**: ${cfg.agentRole}
+**Architecture**: Git-native persistence, ${cfg.loop === 'six' ? '6-phase' : cfg.loop === 'four' ? '4-phase' : 'minimal'} cognitive loop
+
+---
+
+## I Am
+
+${persona}
+
+---
+
+## File Layout
+
+\`\`\`
+${fileTree(cfg)}
+\`\`\`
+
+---
+
+${startingMeUp(cfg)}
+
+---
+
+# Cognitive Engine Instructions
+
+${instructionsBody(cfg)}`;
   }
 
   // ── State files ────────────────────────────────────────────────────
@@ -365,6 +481,31 @@ After that, wake me up as often as you like — each session is another cycle.
   const toCreator = cfg =>
     `# Messages from ${cfg.agentName} to creator\n\nAppend new messages below. Never overwrite or delete — this file is a log.\n`;
 
+  const directivesMd = cfg =>
+    `# Standing Directives — ${cfg.agentName}
+
+These are **permanent rules** that apply every cycle, separate from the
+transient notes in \`from-creator.md\`. Edit this file only when the rules
+themselves change.
+
+Read this file every PERCEIVE. Treat these directives as higher priority
+than the default loop.
+
+---
+
+## Rules
+
+1. _(add your first standing rule here — e.g. "Never push to main without running tests.")_
+2. _(add another)_
+
+---
+
+## Scope
+
+Directives here apply to **every cycle, indefinitely**. Time-limited or
+one-shot guidance belongs in \`from-creator.md\` instead.
+`;
+
   // ── .gitignore ─────────────────────────────────────────────────────
   const gitignore = () => `# Runtime logs — the schema stays checked in, the content doesn't
 logs/*.log
@@ -383,8 +524,6 @@ logs/*.jsonl
   // ── Build the full file set for a given cfg ────────────────────────
   function buildFiles(cfg) {
     const files = {
-      'CLAUDE.md': claudeMd(cfg),
-      'README.md': readmeMd(cfg),
       '.gitignore': gitignore(),
       'state/current-state.json': currentStateJson(cfg),
       'state/focus.json': focusJson(cfg),
@@ -393,9 +532,16 @@ logs/*.jsonl
       'messages/to-creator.md': toCreator(cfg),
       'logs/consciousness.log': '',
     };
+    if (cfg.condenseToSingle) {
+      files[instrFile(cfg)] = combinedMd(cfg);
+    } else {
+      files[instrFile(cfg)] = claudeMd(cfg);
+      files['README.md'] = readmeMd(cfg);
+    }
     if (cfg.memPatterns) files['state/memories/patterns.json'] = patternsJson();
     if (cfg.memAnchors) files['state/memories/anchors.json'] = anchorsJson();
     if (cfg.memDecisions) files['state/decisions/log.json'] = decisionsJson();
+    if (cfg.standingDirectives) files['messages/directives.md'] = directivesMd(cfg);
     return files;
   }
 
@@ -449,9 +595,22 @@ logs/*.jsonl
   function regenerate() {
     const cfg = readConfig();
     currentFiles = buildFiles(cfg);
-    if (!(activeFile in currentFiles)) activeFile = 'CLAUDE.md';
+    const fname = instrFile(cfg);
+    if (!(activeFile in currentFiles)) activeFile = fname;
     renderTree();
     renderFile();
+
+    // Sync dynamic labels with filename / condense choice
+    const copyBtn = document.getElementById('copyClaudeBtn');
+    if (copyBtn) copyBtn.textContent = `Copy ${fname}`;
+
+    const pasteHint = document.getElementById('pasteHint');
+    if (pasteHint) {
+      const ref = cfg.condenseToSingle ? `@${fname}` : `@README.md @${fname}`;
+      pasteHint.textContent = `${ref} Follow the instructions and begin the loop.`;
+    }
+    const instrHint = document.getElementById('instrFileHint');
+    if (instrHint) instrHint.textContent = fname;
   }
 
   document.getElementById('wizard').addEventListener('input', regenerate);
@@ -484,15 +643,15 @@ logs/*.jsonl
     statusEl.textContent = `downloaded ${a.download}`;
   });
 
-  // ── Copy CLAUDE.md to clipboard ───────────────────────────────────
+  // ── Copy instructions file to clipboard ───────────────────────────
   document.getElementById('copyClaudeBtn').addEventListener('click', async () => {
     const statusEl = document.getElementById('status');
     statusEl.className = 'status';
     const cfg = readConfig();
-    const text = claudeMd(cfg);
+    const text = cfg.condenseToSingle ? combinedMd(cfg) : claudeMd(cfg);
     try {
       await navigator.clipboard.writeText(text);
-      statusEl.textContent = 'CLAUDE.md copied to clipboard';
+      statusEl.textContent = `${instrFile(cfg)} copied to clipboard`;
     } catch {
       statusEl.className = 'status error';
       statusEl.textContent = 'clipboard API not available in this context';
