@@ -154,6 +154,19 @@ label.radio input:disabled + span, label.check input:disabled + span {
   font-size: 13px;
   margin: 0 0 10px;
 }
+.hint.note {
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.hint.note a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+.hint.note a:hover { text-decoration: underline; }
 
 .preset-row {
   display: flex;
