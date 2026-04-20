@@ -26,12 +26,7 @@
       <!-- ── 1. Identity ─────────────────────────────────────────────── -->
       <fieldset>
         <legend><span class="step">1</span> Identity</legend>
-        <div class="preset-row">
-          <span class="preset-label">Presets:</span>
-          <button type="button" class="preset-btn" data-preset="reset">Reset</button>
-          <button type="button" class="preset-btn" data-preset="johnny2026">Johnny 2026</button>
-          <button type="button" class="preset-btn" data-preset="datum">Commander Datum</button>
-        </div>
+ 
         <label>
           Agent name
           <input type="text" id="agentName" value="" required
@@ -40,6 +35,15 @@
                  placeholder="e.g. Johnny 2026, Commander Datum, your agent's name">
           <small>Shown at the top of the generated instructions file.</small>
         </label>
+
+       <div class="preset-row">
+          <span class="preset-label">Presets:</span>
+          <button type="button" class="preset-btn" data-preset="reset">Reset</button>
+          <button type="button" class="preset-btn" data-preset="johnny2026">Johnny 2026</button>
+          <button type="button" class="preset-btn" data-preset="datum">Commander Datum</button>
+        </div>
+
+
         <label>
           Role (one line)
           <input type="text" id="agentRole"
