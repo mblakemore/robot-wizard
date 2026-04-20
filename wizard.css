@@ -155,6 +155,28 @@ label.radio input:disabled + span, label.check input:disabled + span {
   margin: 0 0 10px;
 }
 
+.preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+.preset-label {
+  color: var(--muted);
+  font-size: 13px;
+  margin-right: 2px;
+}
+.preset-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 5px;
+}
+
 .preview-wrap {
   display: grid;
   grid-template-columns: 240px 1fr;

@@ -26,12 +26,19 @@
       <!-- ── 1. Identity ─────────────────────────────────────────────── -->
       <fieldset>
         <legend><span class="step">1</span> Identity</legend>
+        <div class="preset-row">
+          <span class="preset-label">Presets:</span>
+          <button type="button" class="preset-btn" data-preset="reset">Reset</button>
+          <button type="button" class="preset-btn" data-preset="johnny2026">Johnny 2026</button>
+          <button type="button" class="preset-btn" data-preset="datum">Commander Datum</button>
+        </div>
         <label>
           Agent name
-          <input type="text" id="agentName" value="Johnny 5" required
+          <input type="text" id="agentName" value="" required
                  pattern="[A-Za-z0-9 _\-]{1,40}"
-                 title="Letters, numbers, spaces, hyphens, underscores">
-          <small>Shown at the top of README.md and CLAUDE.md.</small>
+                 title="Letters, numbers, spaces, hyphens, underscores"
+                 placeholder="e.g. Johnny 2026, Commander Datum, your agent's name">
+          <small>Shown at the top of the generated instructions file.</small>
         </label>
         <label>
           Role (one line)
@@ -44,7 +51,7 @@
           Purpose (a paragraph — optional)
           <textarea id="agentPurpose" rows="3"
                     placeholder="What does this agent exist to do?"></textarea>
-          <small>Appears in the "I Am" section of README.md.</small>
+          <small>Appears in the "I Am" section of the generated docs.</small>
         </label>
       </fieldset>
 
@@ -162,8 +169,8 @@
           <span><strong>Operator</strong> — runs and maintains an existing system.</span>
         </label>
         <label class="radio">
-          <input type="radio" name="persona" value="johnny5">
-          <span><strong>Johnny 5</strong> — curious, eager, "need more input." A creature rather than a worker.</span>
+          <input type="radio" name="persona" value="creature">
+          <span><strong>Digital Creature</strong> — identity, agency, and memory that persist across commits. A creature rather than a worker. The grounding the DC agents use.</span>
         </label>
       </fieldset>
 
