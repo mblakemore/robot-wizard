@@ -22,7 +22,7 @@ A minimal agent repo with:
 - `README.md` — identity, purpose, file layout
 - `state/current-state.json`, `state/focus.json` — per-cycle tracking
 - `state/memories/context.json` — working memory (always on)
-- Optional: `patterns.json`, `anchors.json`, `decisions/log.json`
+- Optional: `patterns.jsonl`, `anchors.jsonl`, `decisions/log.jsonl` (append-only, one JSON object per line)
 - `messages/from-creator.md` + `messages/to-creator.md`
 - `logs/consciousness.log`
 - `.gitignore`

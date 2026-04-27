@@ -115,7 +115,7 @@ Every cycle: **PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSI
 - \`git status\` and \`git log --oneline -5\` — what changed?
 
 ### PHASE 2: REFLECT
-- What patterns do I already have about this area? (see \`state/memories/patterns.json\`)
+- What patterns do I already have about this area? (see \`state/memories/patterns.jsonl\`)
 - What's the simplest correct next step?
 - Is there an open question I should answer before acting?
 - Storage ≠ Retrieval: **actively query** past patterns before deciding.
@@ -135,10 +135,16 @@ planning about work. Keep cycles focused — one clear accomplishment is better
 than three half-done things.
 
 ### PHASE 5: CONSOLIDATE
-- Add new patterns to \`state/memories/patterns.json\` — what worked? what didn't?
-- Add anchors to \`state/memories/anchors.json\` for significant milestones.
-- Update \`state/memories/context.json\` with current focus and discoveries.
-- If you made an architectural choice, log it in \`state/decisions/log.json\`.
+- Add new patterns to \`state/memories/patterns.jsonl\` — append one JSON object per line. What worked? What didn't?
+- Add anchors to \`state/memories/anchors.jsonl\` for significant milestones (one per line).
+- Update \`state/memories/context.json\` with current focus and discoveries (single object, overwritten).
+- If you made an architectural choice, append it to \`state/decisions/log.jsonl\`.
+
+**JSONL discipline.** Append-only collections live in \`.jsonl\` — one JSON
+object per line, no array wrapper. Append with \`echo '{...}' >> file.jsonl\`,
+read by streaming line-by-line. Never rewrite the whole file. Single-object
+state (\`current-state.json\`, \`focus.json\`, \`context.json\`) stays as
+ordinary JSON because it's overwritten each cycle.
 
 ### PHASE 6: PERSIST
 \`\`\`bash
@@ -150,7 +156,14 @@ git commit -m "C\${CYCLE}: \${brief summary}"
 git push
 \`\`\`
 
-The commit is the cycle's end. Next time you wake up, \`git log\` is your history.`;
+**Push is required, not optional.** A commit that never reaches the remote
+is a memory only this machine has. If \`git push\` fails (no remote, auth
+error, network), surface the failure in \`messages/to-creator.md\` rather
+than silently moving on — an agent that stops pushing has effectively
+stopped persisting.
+
+The commit-and-push is the cycle's end. Next time you wake up, \`git log\`
+is your history.`;
 
   const LOOP_FOUR = `## The 4-Phase Cognitive Loop
 
@@ -171,10 +184,14 @@ What / Why / How / Done-when
 Do the task. Write code, notes, or documents. Concrete output.
 
 ### PHASE 4: PERSIST
-Update state. Commit. Push.
+Update state. Commit. **Push.**
 \`\`\`bash
 git add -A && git commit -m "C\${CYCLE}: ..." && git push
 \`\`\`
+
+The push is mandatory — an unpushed commit is local-only memory and won't
+survive a fresh checkout. If push fails, log it in \`messages/to-creator.md\`
+and stop the cycle there.
 
 Reflection and consolidation are folded into DECIDE and PERSIST rather than
 given their own phases. Faster per-cycle; rely on your own judgment to
@@ -184,10 +201,14 @@ capture lessons.`;
 
 1. **Read.** Glance at \`state/\`, read \`messages/from-creator.md\`, look at recent commits.
 2. **Act.** Make one real change — code, prose, or notes.
-3. **Commit.** \`git commit -m "C\${CYCLE}: ..."\` then push.
+3. **Commit & push.** \`git add -A && git commit -m "C\${CYCLE}: ..." && git push\`
 
-That's the entire contract. Add structure (reflection phases, pattern memory,
-decision logs) as the agent matures and you discover you need them.`;
+That's the entire contract. The push is part of the contract — a local
+commit that never reaches the remote is memory only this machine has, and
+the next cycle (possibly on another machine) won't see it.
+
+Add structure (reflection phases, pattern memory, decision logs) as the
+agent matures and you discover you need them.`;
 
   function loopSection(cfg) {
     if (cfg.loop === 'four') return LOOP_FOUR;
@@ -198,13 +219,19 @@ decision logs) as the agent matures and you discover you need them.`;
   // ── Memory section for CLAUDE.md ───────────────────────────────────
   function memorySection(cfg) {
     const items = [];
-    if (cfg.memPatterns) items.push('- `state/memories/patterns.json` — reusable knowledge (store in CONSOLIDATE, query in REFLECT)');
-    items.push('- `state/memories/context.json` — working memory, updated every cycle');
-    if (cfg.memAnchors) items.push('- `state/memories/anchors.json` — significant milestones');
-    if (cfg.memDecisions) items.push('- `state/decisions/log.json` — architectural decisions + outcome tracking');
+    if (cfg.memPatterns) items.push('- `state/memories/patterns.jsonl` — reusable knowledge, one JSON object per line (append in CONSOLIDATE, grep/scan in REFLECT)');
+    items.push('- `state/memories/context.json` — working memory, single object overwritten every cycle');
+    if (cfg.memAnchors) items.push('- `state/memories/anchors.jsonl` — significant milestones, one per line');
+    if (cfg.memDecisions) items.push('- `state/decisions/log.jsonl` — architectural decisions + outcome tracking, one per line');
     return `## Memory
 
 ${items.join('\n')}
+
+**Why JSONL for collections.** Append-only logs (patterns, anchors, decisions)
+use JSON Lines — one self-contained JSON object per line. Append is a single
+\`>>\` redirect; reading is line-by-line; merge conflicts stay local to the
+lines that changed. No \`{ "patterns": [ ... ] }\` array wrapper to rewrite
+on every entry.
 
 **Storage ≠ Retrieval.** Writing a pattern doesn't mean you'll recall it — you
 must actively read patterns back in PERCEIVE/REFLECT before deciding. Memory
@@ -212,10 +239,16 @@ that isn't consulted is just log spam.
 
 Concrete example — before implementing a retry, scan past patterns:
 \`\`\`bash
-grep -i 'retry' state/memories/patterns.json
+grep -i 'retry' state/memories/patterns.jsonl
 \`\`\`
 If a prior cycle already learned "retry N=3 with expo backoff, don't retry
-404s," use it. Don't rediscover yesterday's answer.`;
+404s," use it. Don't rediscover yesterday's answer.
+
+Append a new pattern:
+\`\`\`bash
+echo '{"id":"c12_001","pattern":"retry transient 5xx with expo backoff, never 4xx","category":"implementation","confidence":0.8,"created":"'$(date -Iseconds)'"}' \\
+  >> state/memories/patterns.jsonl
+\`\`\``;
   }
 
   // ── Messages section (changes with standingDirectives option) ──────
@@ -286,10 +319,10 @@ ${messagesSection(cfg)}
 
 ## State Files (keep these fresh)
 
-- \`state/current-state.json\` — cycle number, phase, status, last result, next step
-- \`state/focus.json\` — current deliverable, progress, remaining, blockers
-${cfg.memPatterns ? '- `state/memories/patterns.json` — reusable patterns\n' : ''}${cfg.memAnchors ? '- `state/memories/anchors.json` — milestone anchors\n' : ''}- \`state/memories/context.json\` — working memory
-${cfg.memDecisions ? '- `state/decisions/log.json` — decision log\n' : ''}
+- \`state/current-state.json\` — cycle number, phase, status, last result, next step (single object)
+- \`state/focus.json\` — current deliverable, progress, remaining, blockers (single object)
+${cfg.memPatterns ? '- `state/memories/patterns.jsonl` — reusable patterns (append-only, one per line)\n' : ''}${cfg.memAnchors ? '- `state/memories/anchors.jsonl` — milestone anchors (append-only, one per line)\n' : ''}- \`state/memories/context.json\` — working memory (single object)
+${cfg.memDecisions ? '- `state/decisions/log.jsonl` — decision log (append-only, one per line)\n' : ''}
 Update these every cycle. Stale state causes redundancy loops — you'll
 rediscover yesterday's answers.
 
@@ -365,10 +398,10 @@ ${instructionsBody(cfg)}`;
     if (cfg.memPatterns || cfg.memAnchors) {
       tree.push('│   ├── memories/');
       const memLines = ['│   │   └── context.json'];
-      if (cfg.memPatterns) memLines.unshift('│   │   ├── patterns.json');
+      if (cfg.memPatterns) memLines.unshift('│   │   ├── patterns.jsonl');
       if (cfg.memAnchors) {
         const idx = cfg.memPatterns ? 1 : 0;
-        memLines.splice(idx, 0, '│   │   ├── anchors.json');
+        memLines.splice(idx, 0, '│   │   ├── anchors.jsonl');
       }
       tree.push(...memLines);
     } else {
@@ -377,7 +410,7 @@ ${instructionsBody(cfg)}`;
     }
     if (cfg.memDecisions) {
       tree.push('│   └── decisions/');
-      tree.push('│       └── log.json');
+      tree.push('│       └── log.jsonl');
     }
     tree.push('├── messages/');
     if (cfg.standingDirectives) {
@@ -517,9 +550,11 @@ ${instructionsBody(cfg)}`;
     updated: '',
   }, null, 2) + '\n';
 
-  const patternsJson = () => JSON.stringify({ patterns: [] }, null, 2) + '\n';
-  const anchorsJson = () => JSON.stringify({ anchors: [] }, null, 2) + '\n';
-  const decisionsJson = () => JSON.stringify({ decisions: [] }, null, 2) + '\n';
+  // Append-only collections live in JSONL — one JSON object per line.
+  // The empty file IS the empty collection (no array wrapper to maintain).
+  const patternsJsonl = () => '';
+  const anchorsJsonl = () => '';
+  const decisionsJsonl = () => '';
 
   // ── Message stubs ──────────────────────────────────────────────────
   const fromCreator = () => '';
@@ -583,9 +618,9 @@ logs/*.jsonl
       files[instrFile(cfg)] = claudeMd(cfg);
       files['README.md'] = readmeMd(cfg);
     }
-    if (cfg.memPatterns) files['state/memories/patterns.json'] = patternsJson();
-    if (cfg.memAnchors) files['state/memories/anchors.json'] = anchorsJson();
-    if (cfg.memDecisions) files['state/decisions/log.json'] = decisionsJson();
+    if (cfg.memPatterns) files['state/memories/patterns.jsonl'] = patternsJsonl();
+    if (cfg.memAnchors) files['state/memories/anchors.jsonl'] = anchorsJsonl();
+    if (cfg.memDecisions) files['state/decisions/log.jsonl'] = decisionsJsonl();
     if (cfg.standingDirectives) files['messages/directives.md'] = directivesMd(cfg);
     return files;
   }
