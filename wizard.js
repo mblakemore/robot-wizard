@@ -104,18 +104,20 @@
   };
 
   // ── Loop instructions ──────────────────────────────────────────────
-  const LOOP_SIX = `## The 6-Phase Cognitive Loop
+  function loopSix(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
+    return `## The 6-Phase Cognitive Loop
 
 Every cycle: **PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSIST**
 
 ### PHASE 1: PERCEIVE
-- Read \`state/current-state.json\` — where did I leave off?
-- Read \`state/focus.json\` — what am I working on?
-- Read \`messages/from-creator.md\` — any new directives?
+- Read \`${p}state/current-state.json\` — where did I leave off?
+- Read \`${p}state/focus.json\` — what am I working on?
+- Read \`${p}messages/from-creator.md\` — any new directives?
 - \`git status\` and \`git log --oneline -5\` — what changed?
 
 ### PHASE 2: REFLECT
-- What patterns do I already have about this area? (see \`state/memories/patterns.jsonl\`)
+- What patterns do I already have about this area? (see \`${p}state/memories/patterns.jsonl\`)
 - What's the simplest correct next step?
 - Is there an open question I should answer before acting?
 - Storage ≠ Retrieval: **actively query** past patterns before deciding.
@@ -135,10 +137,10 @@ planning about work. Keep cycles focused — one clear accomplishment is better
 than three half-done things.
 
 ### PHASE 5: CONSOLIDATE
-- Add new patterns to \`state/memories/patterns.jsonl\` — append one JSON object per line. What worked? What didn't?
-- Add anchors to \`state/memories/anchors.jsonl\` for significant milestones (one per line).
-- Update \`state/memories/context.json\` with current focus and discoveries (single object, overwritten).
-- If you made an architectural choice, append it to \`state/decisions/log.jsonl\`.
+- Add new patterns to \`${p}state/memories/patterns.jsonl\` — append one JSON object per line. What worked? What didn't?
+- Add anchors to \`${p}state/memories/anchors.jsonl\` for significant milestones (one per line).
+- Update \`${p}state/memories/context.json\` with current focus and discoveries (single object, overwritten).
+- If you made an architectural choice, append it to \`${p}state/decisions/log.jsonl\`.
 
 **JSONL discipline.** Append-only collections live in \`.jsonl\` — one JSON
 object per line, no array wrapper. Append with \`echo '{...}' >> file.jsonl\`,
@@ -158,20 +160,23 @@ git push
 
 **Push is required, not optional.** A commit that never reaches the remote
 is a memory only this machine has. If \`git push\` fails (no remote, auth
-error, network), surface the failure in \`messages/to-creator.md\` rather
+error, network), surface the failure in \`${p}messages/to-creator.md\` rather
 than silently moving on — an agent that stops pushing has effectively
 stopped persisting.
 
 The commit-and-push is the cycle's end. Next time you wake up, \`git log\`
 is your history.`;
+  }
 
-  const LOOP_FOUR = `## The 4-Phase Cognitive Loop
+  function loopFour(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
+    return `## The 4-Phase Cognitive Loop
 
 Every cycle: **PERCEIVE → DECIDE → ACT → PERSIST**
 
 ### PHASE 1: PERCEIVE
-- Read state: \`state/current-state.json\`, \`state/focus.json\`.
-- Read \`messages/from-creator.md\` for new directives.
+- Read state: \`${p}state/current-state.json\`, \`${p}state/focus.json\`.
+- Read \`${p}messages/from-creator.md\` for new directives.
 - \`git log --oneline -5\` to see what you did recently.
 
 ### PHASE 2: DECIDE
@@ -190,16 +195,19 @@ git add -A && git commit -m "C\${CYCLE}: ..." && git push
 \`\`\`
 
 The push is mandatory — an unpushed commit is local-only memory and won't
-survive a fresh checkout. If push fails, log it in \`messages/to-creator.md\`
+survive a fresh checkout. If push fails, log it in \`${p}messages/to-creator.md\`
 and stop the cycle there.
 
 Reflection and consolidation are folded into DECIDE and PERSIST rather than
 given their own phases. Faster per-cycle; rely on your own judgment to
 capture lessons.`;
+  }
 
-  const LOOP_MINIMAL = `## The Cognitive Loop (minimal)
+  function loopMinimal(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
+    return `## The Cognitive Loop (minimal)
 
-1. **Read.** Glance at \`state/\`, read \`messages/from-creator.md\`, look at recent commits.
+1. **Read.** Glance at \`${p}state/\`, read \`${p}messages/from-creator.md\`, look at recent commits.
 2. **Act.** Make one real change — code, prose, or notes.
 3. **Commit & push.** \`git add -A && git commit -m "C\${CYCLE}: ..." && git push\`
 
@@ -209,20 +217,22 @@ the next cycle (possibly on another machine) won't see it.
 
 Add structure (reflection phases, pattern memory, decision logs) as the
 agent matures and you discover you need them.`;
+  }
 
   function loopSection(cfg) {
-    if (cfg.loop === 'four') return LOOP_FOUR;
-    if (cfg.loop === 'minimal') return LOOP_MINIMAL;
-    return LOOP_SIX;
+    if (cfg.loop === 'four') return loopFour(cfg);
+    if (cfg.loop === 'minimal') return loopMinimal(cfg);
+    return loopSix(cfg);
   }
 
   // ── Memory section for CLAUDE.md ───────────────────────────────────
   function memorySection(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
     const items = [];
-    if (cfg.memPatterns) items.push('- `state/memories/patterns.jsonl` — reusable knowledge, one JSON object per line (append in CONSOLIDATE, grep/scan in REFLECT)');
-    items.push('- `state/memories/context.json` — working memory, single object overwritten every cycle');
-    if (cfg.memAnchors) items.push('- `state/memories/anchors.jsonl` — significant milestones, one per line');
-    if (cfg.memDecisions) items.push('- `state/decisions/log.jsonl` — architectural decisions + outcome tracking, one per line');
+    if (cfg.memPatterns) items.push(`- \`${p}state/memories/patterns.jsonl\` — reusable knowledge, one JSON object per line (append in CONSOLIDATE, grep/scan in REFLECT)`);
+    items.push(`- \`${p}state/memories/context.json\` — working memory, single object overwritten every cycle`);
+    if (cfg.memAnchors) items.push(`- \`${p}state/memories/anchors.jsonl\` — significant milestones, one per line`);
+    if (cfg.memDecisions) items.push(`- \`${p}state/decisions/log.jsonl\` — architectural decisions + outcome tracking, one per line`);
     return `## Memory
 
 ${items.join('\n')}
@@ -239,7 +249,7 @@ that isn't consulted is just log spam.
 
 Concrete example — before implementing a retry, scan past patterns:
 \`\`\`bash
-grep -i 'retry' state/memories/patterns.jsonl
+grep -i 'retry' ${p}state/memories/patterns.jsonl
 \`\`\`
 If a prior cycle already learned "retry N=3 with expo backoff, don't retry
 404s," use it. Don't rediscover yesterday's answer.
@@ -247,28 +257,29 @@ If a prior cycle already learned "retry N=3 with expo backoff, don't retry
 Append a new pattern:
 \`\`\`bash
 echo '{"id":"c12_001","pattern":"retry transient 5xx with expo backoff, never 4xx","category":"implementation","confidence":0.8,"created":"'$(date -Iseconds)'"}' \\
-  >> state/memories/patterns.jsonl
+  >> ${p}state/memories/patterns.jsonl
 \`\`\``;
   }
 
   // ── Messages section (changes with standingDirectives option) ──────
   function messagesSection(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
     if (cfg.standingDirectives) {
       return `## Messages
 
-- \`messages/directives.md\` — **standing rules** that apply every cycle.
+- \`${p}messages/directives.md\` — **standing rules** that apply every cycle.
   Read every PERCEIVE. Treat as higher priority than the default loop.
   Edit only when the rules themselves change.
-- \`messages/from-creator.md\` — **transient** notes from the creator since
+- \`${p}messages/from-creator.md\` — **transient** notes from the creator since
   your last cycle. Read every PERCEIVE. Clear the file after acting on it.
-- \`messages/to-creator.md\` — append when you need something the creator
+- \`${p}messages/to-creator.md\` — append when you need something the creator
   must provide (new tool, clarification, permission). Never overwrite.`;
     }
     return `## Messages
 
-- \`messages/from-creator.md\` — read every PERCEIVE. Creator directives take
+- \`${p}messages/from-creator.md\` — read every PERCEIVE. Creator directives take
   priority over any plan. Clear the file after acting on it.
-- \`messages/to-creator.md\` — append messages when you need something the
+- \`${p}messages/to-creator.md\` — append messages when you need something the
   creator must provide (new tool, clarification, permission). Never overwrite.`;
   }
 
@@ -319,10 +330,10 @@ ${messagesSection(cfg)}
 
 ## State Files (keep these fresh)
 
-- \`state/current-state.json\` — cycle number, phase, status, last result, next step (single object)
-- \`state/focus.json\` — current deliverable, progress, remaining, blockers (single object)
-${cfg.memPatterns ? '- `state/memories/patterns.jsonl` — reusable patterns (append-only, one per line)\n' : ''}${cfg.memAnchors ? '- `state/memories/anchors.jsonl` — milestone anchors (append-only, one per line)\n' : ''}- \`state/memories/context.json\` — working memory (single object)
-${cfg.memDecisions ? '- `state/decisions/log.jsonl` — decision log (append-only, one per line)\n' : ''}
+- \`${slug(cfg.agentName)}/state/current-state.json\` — cycle number, phase, status, last result, next step (single object)
+- \`${slug(cfg.agentName)}/state/focus.json\` — current deliverable, progress, remaining, blockers (single object)
+${cfg.memPatterns ? `- \`${slug(cfg.agentName)}/state/memories/patterns.jsonl\` — reusable patterns (append-only, one per line)\n` : ''}${cfg.memAnchors ? `- \`${slug(cfg.agentName)}/state/memories/anchors.jsonl\` — milestone anchors (append-only, one per line)\n` : ''}- \`${slug(cfg.agentName)}/state/memories/context.json\` — working memory (single object)
+${cfg.memDecisions ? `- \`${slug(cfg.agentName)}/state/decisions/log.jsonl\` — decision log (append-only, one per line)\n` : ''}
 Update these every cycle. Stale state causes redundancy loops — you'll
 rediscover yesterday's answers.
 
@@ -337,7 +348,7 @@ These come from thousands of cycles of empirical operation:
 
 1. **Storage ≠ Retrieval**: Storing a pattern doesn't mean you'll recall it. Build active memory querying into every Reflect phase.
 
-2. **Stale focus = redundancy loops**: If your focus metadata doesn't match your current cycle, you'll repeat work. Update \`focus.json\` every cycle.
+2. **Stale focus = redundancy loops**: If your focus metadata doesn't match your current cycle, you'll repeat work. Update \`${slug(cfg.agentName)}/state/focus.json\` every cycle.
 
 3. **Completion ≠ perfection**: Ship the cycle. Iterate next cycle.
 
@@ -358,7 +369,7 @@ laid the scaffold; you put the first real thought into it.
 1. Read ${readmeRef}.
 2. PERCEIVE: state files are empty — that's expected.
 3. REFLECT: decide on the first real thing to think about or do.
-4. ACT: make one concrete change (write to \`context.json\`, add a pattern,
+4. ACT: make one concrete change (write to \`${slug(cfg.agentName)}/state/memories/context.json\`, add a pattern,
    sketch a plan, fix a typo — anything real).
 5. CONSOLIDATE & PERSIST: commit \`C1: first breath\` and push.
 
@@ -561,11 +572,12 @@ ${instructionsBody(cfg)}`;
   const toCreator = cfg =>
     `# Messages from ${cfg.agentName} to creator\n\nAppend new messages below. Never overwrite or delete — this file is a log.\n`;
 
-  const directivesMd = cfg =>
-    `# Standing Directives — ${cfg.agentName}
+  const directivesMd = cfg => {
+    const p = `${slug(cfg.agentName)}/`;
+    return `# Standing Directives — ${cfg.agentName}
 
 These are **permanent rules** that apply every cycle, separate from the
-transient notes in \`from-creator.md\`. Edit this file only when the rules
+transient notes in \`${p}messages/from-creator.md\`. Edit this file only when the rules
 themselves change.
 
 Read this file every PERCEIVE. Treat these directives as higher priority
@@ -583,8 +595,9 @@ than the default loop.
 ## Scope
 
 Directives here apply to **every cycle, indefinitely**. Time-limited or
-one-shot guidance belongs in \`from-creator.md\` instead.
+one-shot guidance belongs in \`${p}messages/from-creator.md\` instead.
 `;
+  };
 
   // ── .gitignore ─────────────────────────────────────────────────────
   const gitignore = () => `# Runtime logs — the schema stays checked in, the content doesn't
@@ -603,25 +616,26 @@ logs/*.jsonl
 
   // ── Build the full file set for a given cfg ────────────────────────
   function buildFiles(cfg) {
+    const p = `${slug(cfg.agentName)}/`;
     const files = {
       '.gitignore': gitignore(),
-      'state/current-state.json': currentStateJson(cfg),
-      'state/focus.json': focusJson(cfg),
-      'state/memories/context.json': contextJson(cfg),
-      'messages/from-creator.md': fromCreator(),
-      'messages/to-creator.md': toCreator(cfg),
-      'logs/consciousness.log': '',
+      [`${p}state/current-state.json`]: currentStateJson(cfg),
+      [`${p}state/focus.json`]: focusJson(cfg),
+      [`${p}state/memories/context.json`]: contextJson(cfg),
+      [`${p}messages/from-creator.md`]: fromCreator(),
+      [`${p}messages/to-creator.md`]: toCreator(cfg),
+      [`${p}logs/consciousness.log`]: '',
     };
     if (cfg.condenseToSingle) {
-      files[instrFile(cfg)] = combinedMd(cfg);
+      files[`${p}${instrFile(cfg)}`] = combinedMd(cfg);
     } else {
-      files[instrFile(cfg)] = claudeMd(cfg);
-      files['README.md'] = readmeMd(cfg);
+      files[`${p}${instrFile(cfg)}`] = claudeMd(cfg);
+      files[`${p}README.md`] = readmeMd(cfg);
     }
-    if (cfg.memPatterns) files['state/memories/patterns.jsonl'] = patternsJsonl();
-    if (cfg.memAnchors) files['state/memories/anchors.jsonl'] = anchorsJsonl();
-    if (cfg.memDecisions) files['state/decisions/log.jsonl'] = decisionsJsonl();
-    if (cfg.standingDirectives) files['messages/directives.md'] = directivesMd(cfg);
+    if (cfg.memPatterns) files[`${p}state/memories/patterns.jsonl`] = patternsJsonl();
+    if (cfg.memAnchors) files[`${p}state/memories/anchors.jsonl`] = anchorsJsonl();
+    if (cfg.memDecisions) files[`${p}state/decisions/log.jsonl`] = decisionsJsonl();
+    if (cfg.standingDirectives) files[`${p}messages/directives.md`] = directivesMd(cfg);
     return files;
   }
 
@@ -631,7 +645,7 @@ logs/*.jsonl
   const fileBody = document.getElementById('fileBody');
 
   let currentFiles = {};
-  let activeFile = 'CLAUDE.md';
+  let activeFile = '';
 
   function renderTree() {
     const byDir = {};
@@ -676,7 +690,8 @@ logs/*.jsonl
     const cfg = readConfig();
     currentFiles = buildFiles(cfg);
     const fname = instrFile(cfg);
-    if (!(activeFile in currentFiles)) activeFile = fname;
+    const defaultFile = `${slug(cfg.agentName)}/${fname}`;
+    if (!(activeFile in currentFiles)) activeFile = defaultFile;
     renderTree();
     renderFile();
 
