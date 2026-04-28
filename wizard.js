@@ -22,6 +22,7 @@
       filename: radio('filename'),             // "CLAUDE" or "AGENT"
       condenseToSingle: q('#condenseToSingle').checked,
       standingDirectives: q('#standingDirectives').checked,
+      standaloneRepo: q('#standaloneRepo').checked,
       createdDate: new Date().toISOString().slice(0, 10),
     };
   }
@@ -105,7 +106,7 @@
 
   // ── Loop instructions ──────────────────────────────────────────────
   function loopSix(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     return `## The 6-Phase Cognitive Loop
 
 Every cycle: **PERCEIVE → REFLECT → DECIDE → ACT → CONSOLIDATE → PERSIST**
@@ -169,7 +170,7 @@ is your history.`;
   }
 
   function loopFour(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     return `## The 4-Phase Cognitive Loop
 
 Every cycle: **PERCEIVE → DECIDE → ACT → PERSIST**
@@ -204,7 +205,7 @@ capture lessons.`;
   }
 
   function loopMinimal(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     return `## The Cognitive Loop (minimal)
 
 1. **Read.** Glance at \`${p}state/\`, read \`${p}messages/from-creator.md\`, look at recent commits.
@@ -227,7 +228,7 @@ agent matures and you discover you need them.`;
 
   // ── Memory section for CLAUDE.md ───────────────────────────────────
   function memorySection(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     const items = [];
     if (cfg.memPatterns) items.push(`- \`${p}state/memories/patterns.jsonl\` — reusable knowledge, one JSON object per line (append in CONSOLIDATE, grep/scan in REFLECT)`);
     items.push(`- \`${p}state/memories/context.json\` — working memory, single object overwritten every cycle`);
@@ -263,7 +264,7 @@ echo '{"id":"c12_001","pattern":"retry transient 5xx with expo backoff, never 4x
 
   // ── Messages section (changes with standingDirectives option) ──────
   function messagesSection(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     if (cfg.standingDirectives) {
       return `## Messages
 
@@ -286,6 +287,7 @@ echo '{"id":"c12_001","pattern":"retry transient 5xx with expo backoff, never 4x
   // ── Instructions-file body (everything inside CLAUDE.md/AGENT.md) ──
   function instructionsBody(cfg) {
     const readmeRef = cfg.condenseToSingle ? 'this file' : '`README.md` and this file';
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     return `**Instance**: ${cfg.agentName}
 **Role**: ${cfg.agentRole}
 **Cognitive Engine**: Claude Code (Anthropic) — or any equivalent assistant that reads this file
@@ -330,10 +332,10 @@ ${messagesSection(cfg)}
 
 ## State Files (keep these fresh)
 
-- \`${slug(cfg.agentName)}/state/current-state.json\` — cycle number, phase, status, last result, next step (single object)
-- \`${slug(cfg.agentName)}/state/focus.json\` — current deliverable, progress, remaining, blockers (single object)
-${cfg.memPatterns ? `- \`${slug(cfg.agentName)}/state/memories/patterns.jsonl\` — reusable patterns (append-only, one per line)\n` : ''}${cfg.memAnchors ? `- \`${slug(cfg.agentName)}/state/memories/anchors.jsonl\` — milestone anchors (append-only, one per line)\n` : ''}- \`${slug(cfg.agentName)}/state/memories/context.json\` — working memory (single object)
-${cfg.memDecisions ? `- \`${slug(cfg.agentName)}/state/decisions/log.jsonl\` — decision log (append-only, one per line)\n` : ''}
+- \`${p}state/current-state.json\` — cycle number, phase, status, last result, next step (single object)
+- \`${p}state/focus.json\` — current deliverable, progress, remaining, blockers (single object)
+${cfg.memPatterns ? `- \`${p}state/memories/patterns.jsonl\` — reusable patterns (append-only, one per line)\n` : ''}${cfg.memAnchors ? `- \`${p}state/memories/anchors.jsonl\` — milestone anchors (append-only, one per line)\n` : ''}- \`${p}state/memories/context.json\` — working memory (single object)
+${cfg.memDecisions ? `- \`${p}state/decisions/log.jsonl\` — decision log (append-only, one per line)\n` : ''}
 Update these every cycle. Stale state causes redundancy loops — you'll
 rediscover yesterday's answers.
 
@@ -348,7 +350,7 @@ These come from thousands of cycles of empirical operation:
 
 1. **Storage ≠ Retrieval**: Storing a pattern doesn't mean you'll recall it. Build active memory querying into every Reflect phase.
 
-2. **Stale focus = redundancy loops**: If your focus metadata doesn't match your current cycle, you'll repeat work. Update \`${slug(cfg.agentName)}/state/focus.json\` every cycle.
+2. **Stale focus = redundancy loops**: If your focus metadata doesn't match your current cycle, you'll repeat work. Update \`${p}state/focus.json\` every cycle.
 
 3. **Completion ≠ perfection**: Ship the cycle. Iterate next cycle.
 
@@ -362,7 +364,7 @@ These come from thousands of cycles of empirical operation:
 
 ## First Session = Cycle 1
 
-**Read \`${slug(cfg.agentName)}/state/current-state.json\` before applying
+**Read \`${p}state/current-state.json\` before applying
 anything in this section.** If it shows \`"cycle"\` greater than 1, skip this
 section entirely — you are resuming an existing run, not starting fresh.
 
@@ -375,7 +377,7 @@ laid the scaffold; you put the first real thought into it.
 1. Read ${readmeRef}.
 2. PERCEIVE: state files are empty — that's expected.
 3. REFLECT: decide on the first real thing to think about or do.
-4. ACT: make one concrete change (write to \`${slug(cfg.agentName)}/state/memories/context.json\`, add a pattern,
+4. ACT: make one concrete change (write to \`${p}state/memories/context.json\`, add a pattern,
    sketch a plan, fix a typo — anything real).
 5. CONSOLIDATE & PERSIST: commit \`C1: first breath\` and push.
 
@@ -402,8 +404,10 @@ ${instructionsBody(cfg)}`;
 
   // ── File tree (shared by README and combined) ─────────────────────
   function fileTree(cfg) {
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
+    const rootLabel = cfg.standaloneRepo ? './ (repo root)' : `${slug(cfg.agentName)}/`;
     const tree = [
-      `${slug(cfg.agentName)}/`,
+      rootLabel,
       `├── ${instrFile(cfg)}${' '.repeat(Math.max(0, 14 - instrFile(cfg).length))} # Cognitive engine instructions`,
     ];
     if (!cfg.condenseToSingle) {
@@ -578,7 +582,7 @@ ${instructionsBody(cfg)}`;
     `# Messages from ${cfg.agentName} to creator\n\nAppend new messages below. Never overwrite or delete — this file is a log.\n`;
 
   const directivesMd = cfg => {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     return `# Standing Directives — ${cfg.agentName}
 
 These are **permanent rules** that apply every cycle, separate from the
@@ -621,7 +625,7 @@ logs/*.jsonl
 
   // ── Build the full file set for a given cfg ────────────────────────
   function buildFiles(cfg) {
-    const p = `${slug(cfg.agentName)}/`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
     const files = {
       '.gitignore': gitignore(),
       [`${p}state/current-state.json`]: currentStateJson(cfg),
@@ -695,7 +699,8 @@ logs/*.jsonl
     const cfg = readConfig();
     currentFiles = buildFiles(cfg);
     const fname = instrFile(cfg);
-    const defaultFile = `${slug(cfg.agentName)}/${fname}`;
+    const p = cfg.standaloneRepo ? '' : `${slug(cfg.agentName)}/`;
+    const defaultFile = `${p}${fname}`;
     if (!(activeFile in currentFiles)) activeFile = defaultFile;
     renderTree();
     renderFile();
