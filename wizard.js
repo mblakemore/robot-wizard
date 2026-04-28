@@ -362,6 +362,12 @@ These come from thousands of cycles of empirical operation:
 
 ## First Session = Cycle 1
 
+**Read \`${slug(cfg.agentName)}/state/current-state.json\` before applying
+anything in this section.** If it shows \`"cycle"\` greater than 1, skip this
+section entirely — you are resuming an existing run, not starting fresh.
+
+Only if \`current-state.json\` is absent or shows \`"cycle": 1\`:
+
 Your first awakening is not a setup step — it's Cycle 1. Run the normal
 loop, but don't assume prior state holds anything meaningful. The wizard
 laid the scaffold; you put the first real thought into it.
@@ -448,8 +454,7 @@ claude
 #   ${pasteRef} Follow the instructions and begin the loop.
 \`\`\`
 
-On my first cycle I'll initialize what I need and make my first commit.
-After that, wake me up as often as you like — each session is another cycle.`;
+Each session is one cycle. Wake me up as often as you like.`;
   }
 
   // ── README.md (only generated when NOT condensed) ──────────────────
