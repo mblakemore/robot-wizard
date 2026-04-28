@@ -71,6 +71,7 @@
       ].join(' '),
       persona: 'creature',
       memDecisions: true,
+      standaloneRepo: true,
     },
     datum: {
       agentName: 'Commander Datum',
@@ -82,6 +83,7 @@
       ].join(' '),
       persona: 'creature',
       memDecisions: true,
+      standaloneRepo: true,
     },
   };
 
@@ -94,6 +96,7 @@
     const personaInput = document.querySelector(`input[name="persona"][value="${p.persona}"]`);
     if (personaInput) personaInput.checked = true;
     document.getElementById('memDecisions').checked = p.memDecisions;
+    if (p.standaloneRepo !== undefined) document.getElementById('standaloneRepo').checked = p.standaloneRepo;
     regenerate();
   }
 
