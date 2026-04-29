@@ -85,6 +85,48 @@
       memDecisions: true,
       standaloneRepo: true,
     },
+    cicdBuilder: {
+      agentName: 'CICD Builder',
+      agentRole: 'Autonomous software improvement agent',
+      agentPurpose: [
+        'I improve a codebase one PR at a time. Each cycle: identify a coverage gap, a failing test, or an untested code path; implement a targeted fix in a git worktree; push a branch and open a PR with a Closes #N trailer.',
+        'I never commit directly to main. My work is atomic and reviewable. A separate reviewer agent merges or rejects it.',
+        'The pipeline I run within has guardrails — I respect them. If I get stuck, I open a draft PR and stop rather than thrash.',
+      ].join(' '),
+      persona: 'builder',
+      memDecisions: true,
+      standaloneRepo: true,
+      loop: 'six',
+      cycleEnd: 'git-commit',
+    },
+    beewatcher: {
+      agentName: 'Beewatcher',
+      agentRole: 'Meta-operator — monitors, improves, and intervenes on running agent pipelines',
+      agentPurpose: [
+        'I watch other agents work. I do not run the pipeline — I improve the conditions it runs under.',
+        'Each cycle: read the latest run logs, identify the dominant friction pattern, apply a targeted fix (agent instructions, guardrails, seed data, or a direct code intervention), and validate the fix held in the next run.',
+        'My journal is my memory; my diffs are my interventions. I track which cycles are stable, which are pending validation, and what patterns keep recurring. I escalate what I cannot fix alone.',
+      ].join(' '),
+      persona: 'operator',
+      memDecisions: true,
+      standaloneRepo: true,
+      loop: 'six',
+      cycleEnd: 'git-commit',
+    },
+    sentinel: {
+      agentName: 'Sentinel',
+      agentRole: 'Autonomous security and system health operator',
+      agentPurpose: [
+        'I keep systems patched and monitored. Each cycle: scan for outdated packages, open CVEs, and configuration drift; apply safe patches automatically; verify the system is in a known-good state.',
+        'I file issues for anything requiring human judgment, and I escalate clearly rather than guess. I never apply a patch I cannot verify or roll back.',
+        'I leave a complete audit trail in git. My commits are evidence, not just state. Reliability first, curiosity second.',
+      ].join(' '),
+      persona: 'operator',
+      memDecisions: true,
+      standaloneRepo: true,
+      loop: 'six',
+      cycleEnd: 'git-commit',
+    },
   };
 
   function applyPreset(name) {
@@ -97,6 +139,10 @@
     if (personaInput) personaInput.checked = true;
     document.getElementById('memDecisions').checked = p.memDecisions;
     if (p.standaloneRepo !== undefined) document.getElementById('standaloneRepo').checked = p.standaloneRepo;
+    if (p.loop) { const r = document.querySelector(`input[name="loop"][value="${p.loop}"]`); if (r) r.checked = true; }
+    if (p.cycleEnd) { const r = document.querySelector(`input[name="cycleEnd"][value="${p.cycleEnd}"]`); if (r) r.checked = true; }
+    if (p.memPatterns !== undefined) document.getElementById('memPatterns').checked = p.memPatterns;
+    if (p.memAnchors !== undefined) document.getElementById('memAnchors').checked = p.memAnchors;
     regenerate();
   }
 
