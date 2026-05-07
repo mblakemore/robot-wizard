@@ -186,8 +186,16 @@ label.radio input:disabled + span, label.check input:disabled + span {
 .preset-grid {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 6px 14px;
+  column-gap: 14px;
   align-items: center;
+}
+.preset-grid > * {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.preset-grid > *:nth-last-child(-n+2) {
+  border-bottom: none;
+  padding-bottom: 2px;
 }
 .preset-desc {
   color: var(--muted);
